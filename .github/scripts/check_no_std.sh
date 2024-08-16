@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-# TODO
+# List of no-std packages to build
 no_std_packages=(
 #   reth-codecs
 #   reth-consensus
@@ -16,17 +16,24 @@ no_std_packages=(
 #   reth-revm
 )
 
+# Loop through each package and build it
 for package in "${no_std_packages[@]}"; do
   cmd="cargo +stable build -p $package --target riscv32imac-unknown-none-elf --no-default-features"
 
+  # Output command for CI or local environment
   if [ -n "$CI" ]; then
     echo "::group::$cmd"
   else
     printf "\n%s:\n  %s\n" "$package" "$cmd"
   fi
 
-  $cmd
+  # Execute the build command
+  if ! $cmd; then
+    echo "Build failed for package: $package" >&2
+    exit 1
+  fi
 
+  # Close CI group if in CI environment
   if [ -n "$CI" ]; then
     echo "::endgroup::"
   fi
